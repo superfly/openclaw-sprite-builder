@@ -104,8 +104,9 @@
       </select>
 
       <label for="gatewayCredential">Gateway credential <span class="req">*</span></label>
-      <input type="password" id="gatewayCredential" placeholder="Password">
-      <div class="hint">Used to authenticate gateway connections. Auto-generated if left blank.</div>
+      <input type="password" id="gatewayCredential" placeholder="Leave blank to auto-generate (recommended)">
+      <div class="hint">Used to authenticate gateway connections. Stored in plaintext on the sprite —
+        leave blank for a generated token; never reuse a password from elsewhere.</div>
 
       <button type="submit" class="deploy" id="deployBtn">Provision Sprite</button>
     </form>
@@ -127,8 +128,10 @@
     </div>
 
     <p class="security-note">
-      Your tokens are sent to this builder only to provision your sprite.<br>
-      They are never stored. API keys are written to the sprite's <code>.profile</code>.
+      Your tokens are sent to this builder only to provision your sprite; the builder
+      itself does not retain them.<br>
+      Your API keys <em>and the gateway credential</em> are written in plaintext to the
+      sprite's <code>~/.profile</code>.
     </p>
 
     <div class="diy" style="margin-top: 2.5rem; border-top: 1px solid #222; padding-top: 2rem;">
