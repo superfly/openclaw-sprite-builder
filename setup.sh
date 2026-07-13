@@ -5,7 +5,7 @@ set -euo pipefail
 # Run inside a sprite to set up the builder service.
 #
 # Usage:
-#   git clone https://github.com/theoctopusperson/openclaw-sprite-builder.git ~/openclaw-builder
+#   git clone https://github.com/superfly/openclaw-sprite-builder.git ~/openclaw-builder
 #   cd ~/openclaw-builder
 #   bash setup.sh
 
