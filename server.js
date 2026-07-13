@@ -258,7 +258,12 @@ app.post("/api/deploy", async (req, res) => {
     Connection: "keep-alive",
   });
 
-  const send = (type, data) => res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+  // Mirror deploy events to the service log (message only — never the token
+  // or key payload). Without this the server records nothing about deploys.
+  const send = (type, data) => {
+    console.log(`[deploy:${name}] ${type}${data.message ? `: ${data.message}` : ""}`);
+    res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+  };
   const step = (msg) => send("step", { message: msg });
   const ok = (msg) => send("ok", { message: msg });
   const fail = (msg) => { send("error", { message: msg }); res.end(); };
