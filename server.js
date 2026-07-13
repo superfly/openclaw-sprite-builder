@@ -160,6 +160,24 @@ EOF
   chmod +x "$START_SH"
 fi
 
+# --- openclaw CLI wrapper on PATH ---
+# The gateway runs via \`npx openclaw\` against a custom state/config dir, so a
+# bare \`openclaw\` command isn't on PATH and plain \`npx openclaw\` reads the
+# wrong store. Without this, the "run openclaw devices approve on the host"
+# instruction OpenClaw prints for browser pairing fails with "command not
+# found" even for a user who consoles into the sprite.
+
+log "Installing openclaw CLI wrapper on PATH"
+mkdir -p /home/sprite/.local/bin
+cat > /home/sprite/.local/bin/openclaw << 'CLIEOF'
+#!/usr/bin/env bash
+export OPENCLAW_CONFIG_PATH="\${OPENCLAW_CONFIG_PATH:-/home/sprite/claw/openclaw.json}"
+export OPENCLAW_STATE_DIR="\${OPENCLAW_STATE_DIR:-/home/sprite/claw}"
+source /home/sprite/.profile 2>/dev/null || true
+exec npx --yes openclaw "\$@"
+CLIEOF
+chmod +x /home/sprite/.local/bin/openclaw
+
 # --- openclaw.json (merge defaults, don't overwrite) ---
 
 DEFAULTS=$(cat << 'JSON'
