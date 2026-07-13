@@ -26,6 +26,41 @@ function generateSetupScript(config) {
     gatewayArgs.push("--allow-unconfigured");
   }
 
+  // Point the default agent model at a provider the user actually supplied a
+  // key for. OpenClaw's built-in default is openai/gpt-5.5, so a deploy with
+  // only Anthropic and/or Google keys leaves every agent turn failing with
+  // "No API key found for provider openai". Pick the primary from the first
+  // provided key and use the rest as fallbacks.
+  const MODEL_BY_PROVIDER = {
+    anthropic: "anthropic/claude-sonnet-4-6",
+    openai: "openai/gpt-5.5",
+    google: "google/gemini-3.1-pro-preview",
+  };
+  const models = [
+    ["anthropic", config.anthropicKey],
+    ["openai", config.openaiKey],
+    ["google", config.googleKey],
+  ]
+    .filter(([, key]) => key)
+    .map(([provider]) => MODEL_BY_PROVIDER[provider]);
+
+  const agentDefaults = { workspace: "/home/sprite/claw/workspace" };
+  if (models.length) {
+    agentDefaults.model = { primary: models[0], fallbacks: models.slice(1) };
+  }
+
+  const defaultsJson = JSON.stringify(
+    {
+      agents: { defaults: agentDefaults },
+      gateway: {
+        mode: "local",
+        controlUi: { allowedOrigins: [config.spriteUrl] },
+      },
+    },
+    null,
+    2,
+  );
+
   return `#!/usr/bin/env bash
 set -euo pipefail
 
@@ -127,20 +162,8 @@ fi
 
 # --- openclaw.json (merge defaults, don't overwrite) ---
 
-DEFAULTS=$(cat << JSON
-{
-  "agents": {
-    "defaults": {
-      "workspace": "/home/sprite/claw/workspace"
-    }
-  },
-  "gateway": {
-    "mode": "local",
-    "controlUi": {
-      "allowedOrigins": ["${config.spriteUrl}"]
-    }
-  }
-}
+DEFAULTS=$(cat << 'JSON'
+${defaultsJson}
 JSON
 )
 
