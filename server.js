@@ -329,7 +329,6 @@ app.post("/api/deploy", async (req, res) => {
       gatewayUrl: `wss://${sprite.url.replace("https://", "")}`,
       gatewayToken,
       spriteName: name,
-      curlSetup: `curl -fsSL ${sprite.url}/setup.sh | bash`,
     });
     res.end();
   } catch (e) {

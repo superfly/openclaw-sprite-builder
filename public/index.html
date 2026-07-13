@@ -56,10 +56,6 @@
     .copy-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer; margin-left: 0.5rem; white-space: nowrap; }
     .copy-btn:hover { background: #333; }
 
-    .curl-block { margin-top: 1rem; background: #111; border: 1px solid #222; border-radius: 6px; padding: 0.75rem; }
-    .curl-block .curl-label { font-size: 0.7rem; color: #888; margin-bottom: 0.4rem; }
-    .curl-block code { font-size: 0.78rem; color: #4ade80; word-break: break-all; }
-
     .post-deploy { margin-top: 1rem; font-size: 0.78rem; color: #888; line-height: 1.6; }
     .post-deploy code { color: #ccc; background: #1a1a1a; padding: 0.1rem 0.3rem; border-radius: 3px; }
 
@@ -121,11 +117,6 @@
     <div class="result" id="result">
       <h2>OpenClaw is live!</h2>
       <div id="resultRows"></div>
-      <div class="curl-block" id="curlBlock" style="display:none">
-        <div class="curl-label">Quick setup (curl)</div>
-        <code id="curlCmd"></code>
-        <button class="copy-btn" id="copyCurl" style="margin-top:0.4rem">copy</button>
-      </div>
       <div class="post-deploy">
         Visit your Sprite URL to access the OpenClaw control UI.
         See the <a href="https://github.com/openclaw/openclaw" target="_blank" style="color:#4ade80">OpenClaw docs</a> for full configuration options.
@@ -296,14 +287,6 @@
         if (row.copy) extra = `<button class="copy-btn" onclick="copyText('${esc(row.value).replace(/'/g, "\\'")}')">copy</button>`;
         el.innerHTML = `<span class="label">${esc(row.label)}</span><span class="value">${valueHtml}${extra}</span>`;
         resultRows.appendChild(el);
-      }
-
-      if (data.curlSetup) {
-        const curlBlock = document.getElementById("curlBlock");
-        const curlCmd = document.getElementById("curlCmd");
-        curlBlock.style.display = "block";
-        curlCmd.textContent = data.curlSetup;
-        document.getElementById("copyCurl").onclick = () => copyText(data.curlSetup);
       }
     }
   </script>
