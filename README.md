@@ -19,7 +19,7 @@ Create a sprite and run the setup script:
 ```bash
 sprite create openclaw-builder
 sprite exec openclaw-builder -- bash -c '
-  git clone https://github.com/theoctopusperson/openclaw-sprite-builder.git ~/openclaw-builder
+  git clone https://github.com/superfly/openclaw-sprite-builder.git ~/openclaw-builder
   cd ~/openclaw-builder
   bash setup.sh
 '
@@ -28,7 +28,7 @@ sprite exec openclaw-builder -- bash -c '
 Or if you're already inside a sprite:
 
 ```bash
-git clone https://github.com/theoctopusperson/openclaw-sprite-builder.git ~/openclaw-builder
+git clone https://github.com/superfly/openclaw-sprite-builder.git ~/openclaw-builder
 cd ~/openclaw-builder
 bash setup.sh
 ```

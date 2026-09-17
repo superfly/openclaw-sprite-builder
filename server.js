@@ -26,6 +26,41 @@ function generateSetupScript(config) {
     gatewayArgs.push("--allow-unconfigured");
   }
 
+  // Point the default agent model at a provider the user actually supplied a
+  // key for. OpenClaw's built-in default is openai/gpt-5.5, so a deploy with
+  // only Anthropic and/or Google keys leaves every agent turn failing with
+  // "No API key found for provider openai". Pick the primary from the first
+  // provided key and use the rest as fallbacks.
+  const MODEL_BY_PROVIDER = {
+    anthropic: "anthropic/claude-sonnet-4-6",
+    openai: "openai/gpt-5.5",
+    google: "google/gemini-3.1-pro-preview",
+  };
+  const models = [
+    ["anthropic", config.anthropicKey],
+    ["openai", config.openaiKey],
+    ["google", config.googleKey],
+  ]
+    .filter(([, key]) => key)
+    .map(([provider]) => MODEL_BY_PROVIDER[provider]);
+
+  const agentDefaults = { workspace: "/home/sprite/claw/workspace" };
+  if (models.length) {
+    agentDefaults.model = { primary: models[0], fallbacks: models.slice(1) };
+  }
+
+  const defaultsJson = JSON.stringify(
+    {
+      agents: { defaults: agentDefaults },
+      gateway: {
+        mode: "local",
+        controlUi: { allowedOrigins: [config.spriteUrl] },
+      },
+    },
+    null,
+    2,
+  );
+
   return `#!/usr/bin/env bash
 set -euo pipefail
 
@@ -125,22 +160,28 @@ EOF
   chmod +x "$START_SH"
 fi
 
+# --- openclaw CLI wrapper on PATH ---
+# The gateway runs via \`npx openclaw\` against a custom state/config dir, so a
+# bare \`openclaw\` command isn't on PATH and plain \`npx openclaw\` reads the
+# wrong store. Without this, the "run openclaw devices approve on the host"
+# instruction OpenClaw prints for browser pairing fails with "command not
+# found" even for a user who consoles into the sprite.
+
+log "Installing openclaw CLI wrapper on PATH"
+mkdir -p /home/sprite/.local/bin
+cat > /home/sprite/.local/bin/openclaw << 'CLIEOF'
+#!/usr/bin/env bash
+export OPENCLAW_CONFIG_PATH="\${OPENCLAW_CONFIG_PATH:-/home/sprite/claw/openclaw.json}"
+export OPENCLAW_STATE_DIR="\${OPENCLAW_STATE_DIR:-/home/sprite/claw}"
+source /home/sprite/.profile 2>/dev/null || true
+exec npx --yes openclaw "\$@"
+CLIEOF
+chmod +x /home/sprite/.local/bin/openclaw
+
 # --- openclaw.json (merge defaults, don't overwrite) ---
 
-DEFAULTS=$(cat << JSON
-{
-  "agents": {
-    "defaults": {
-      "workspace": "/home/sprite/claw/workspace"
-    }
-  },
-  "gateway": {
-    "mode": "local",
-    "controlUi": {
-      "allowedOrigins": ["${config.spriteUrl}"]
-    }
-  }
-}
+DEFAULTS=$(cat << 'JSON'
+${defaultsJson}
 JSON
 )
 
@@ -217,7 +258,12 @@ app.post("/api/deploy", async (req, res) => {
     Connection: "keep-alive",
   });
 
-  const send = (type, data) => res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+  // Mirror deploy events to the service log (message only — never the token
+  // or key payload). Without this the server records nothing about deploys.
+  const send = (type, data) => {
+    console.log(`[deploy:${name}] ${type}${data.message ? `: ${data.message}` : ""}`);
+    res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+  };
   const step = (msg) => send("step", { message: msg });
   const ok = (msg) => send("ok", { message: msg });
   const fail = (msg) => { send("error", { message: msg }); res.end(); };
@@ -329,7 +375,6 @@ app.post("/api/deploy", async (req, res) => {
       gatewayUrl: `wss://${sprite.url.replace("https://", "")}`,
       gatewayToken,
       spriteName: name,
-      curlSetup: `curl -fsSL ${sprite.url}/setup.sh | bash`,
     });
     res.end();
   } catch (e) {

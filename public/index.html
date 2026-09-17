@@ -56,10 +56,6 @@
     .copy-btn { background: #222; border: 1px solid #444; color: #ccc; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer; margin-left: 0.5rem; white-space: nowrap; }
     .copy-btn:hover { background: #333; }
 
-    .curl-block { margin-top: 1rem; background: #111; border: 1px solid #222; border-radius: 6px; padding: 0.75rem; }
-    .curl-block .curl-label { font-size: 0.7rem; color: #888; margin-bottom: 0.4rem; }
-    .curl-block code { font-size: 0.78rem; color: #4ade80; word-break: break-all; }
-
     .post-deploy { margin-top: 1rem; font-size: 0.78rem; color: #888; line-height: 1.6; }
     .post-deploy code { color: #ccc; background: #1a1a1a; padding: 0.1rem 0.3rem; border-radius: 3px; }
 
@@ -108,8 +104,9 @@
       </select>
 
       <label for="gatewayCredential">Gateway credential <span class="req">*</span></label>
-      <input type="password" id="gatewayCredential" placeholder="Password">
-      <div class="hint">Used to authenticate gateway connections. Auto-generated if left blank.</div>
+      <input type="password" id="gatewayCredential" placeholder="Leave blank to auto-generate (recommended)">
+      <div class="hint">Used to authenticate gateway connections. Stored in plaintext on the sprite —
+        leave blank for a generated token; never reuse a password from elsewhere.</div>
 
       <button type="submit" class="deploy" id="deployBtn">Provision Sprite</button>
     </form>
@@ -121,20 +118,19 @@
     <div class="result" id="result">
       <h2>OpenClaw is live!</h2>
       <div id="resultRows"></div>
-      <div class="curl-block" id="curlBlock" style="display:none">
-        <div class="curl-label">Quick setup (curl)</div>
-        <code id="curlCmd"></code>
-        <button class="copy-btn" id="copyCurl" style="margin-top:0.4rem">copy</button>
-      </div>
       <div class="post-deploy">
-        Visit your Sprite URL to access the OpenClaw control UI.
+        Open your Sprite URL to load the OpenClaw Control UI, then paste the
+        <strong>Gateway Token</strong> above into Control UI &rarr; Settings.
+        Both Password and Open modes require this token to connect.
         See the <a href="https://github.com/openclaw/openclaw" target="_blank" style="color:#4ade80">OpenClaw docs</a> for full configuration options.
       </div>
     </div>
 
     <p class="security-note">
-      Your tokens are sent to this builder only to provision your sprite.<br>
-      They are never stored. API keys are written to the sprite's <code>.profile</code>.
+      Your tokens are sent to this builder only to provision your sprite; the builder
+      itself does not retain them.<br>
+      Your API keys <em>and the gateway credential</em> are written in plaintext to the
+      sprite's <code>~/.profile</code>.
     </p>
 
     <div class="diy" style="margin-top: 2.5rem; border-top: 1px solid #222; padding-top: 2rem;">
@@ -143,7 +139,7 @@
       </p>
       <div style="background: #111; border: 1px solid #222; border-radius: 6px; padding: 0.75rem; font-size: 0.78rem; line-height: 2;">
         <div><span style="color:#888">1.</span> <span style="color:#ccc">Create a new sprite</span> <code style="color:#4ade80; background:#1a1a1a; padding:0.15rem 0.4rem; border-radius:3px; margin-left:0.25rem">sprite create my-openclaw-builder</code></div>
-        <div><span style="color:#888">2.</span> <span style="color:#ccc">Clone the repo</span> <code style="color:#4ade80; background:#1a1a1a; padding:0.15rem 0.4rem; border-radius:3px; margin-left:0.25rem">sprite exec my-openclaw-builder -- git clone https://github.com/theoctopusperson/openclaw-sprite-builder.git ~/openclaw-builder</code></div>
+        <div><span style="color:#888">2.</span> <span style="color:#ccc">Clone the repo</span> <code style="color:#4ade80; background:#1a1a1a; padding:0.15rem 0.4rem; border-radius:3px; margin-left:0.25rem">sprite exec my-openclaw-builder -- git clone https://github.com/superfly/openclaw-sprite-builder.git ~/openclaw-builder</code></div>
         <div><span style="color:#888">3.</span> <span style="color:#ccc">Run the script</span> <code style="color:#4ade80; background:#1a1a1a; padding:0.15rem 0.4rem; border-radius:3px; margin-left:0.25rem">sprite exec my-openclaw-builder -- bash ~/openclaw-builder/setup.sh</code></div>
         <div><span style="color:#888">4.</span> <span style="color:#fff">Make a million OpenClaws</span></div>
       </div>
@@ -296,14 +292,6 @@
         if (row.copy) extra = `<button class="copy-btn" onclick="copyText('${esc(row.value).replace(/'/g, "\\'")}')">copy</button>`;
         el.innerHTML = `<span class="label">${esc(row.label)}</span><span class="value">${valueHtml}${extra}</span>`;
         resultRows.appendChild(el);
-      }
-
-      if (data.curlSetup) {
-        const curlBlock = document.getElementById("curlBlock");
-        const curlCmd = document.getElementById("curlCmd");
-        curlBlock.style.display = "block";
-        curlCmd.textContent = data.curlSetup;
-        document.getElementById("copyCurl").onclick = () => copyText(data.curlSetup);
       }
     }
   </script>
